@@ -1,4 +1,5 @@
 const pool = require("../../config/db");
+const notificationService = require("../notification/notification.service");
 
 const getVehicles = async (userId) => {
   const result = await pool.query(
@@ -161,32 +162,9 @@ const getVehicleDetail = async (userId, vehicleId) => {
 
 const updateOdometer = async (userId, vehicleId, currentOdometer) => {
   const odometer = Number(currentOdometer);
-
+  console.log("UPDATE ODOMETER CALLED");
   if (Number.isNaN(odometer) || odometer < 0) {
     const error = new Error("Odometer tidak valid");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const existingVehicle = await pool.query(
-    `
-    SELECT current_odometer
-    FROM vehicles
-    WHERE id = $1 AND user_id = $2
-    `,
-    [vehicleId, userId]
-  );
-
-  if (existingVehicle.rows.length === 0) {
-    const error = new Error("Kendaraan tidak ditemukan");
-    error.statusCode = 404;
-    throw error;
-  }
-
-  const oldOdometer = existingVehicle.rows[0].current_odometer;
-
-  if (odometer < oldOdometer) {
-    const error = new Error("Odometer baru tidak boleh lebih kecil dari odometer sebelumnya");
     error.statusCode = 400;
     throw error;
   }
@@ -194,17 +172,33 @@ const updateOdometer = async (userId, vehicleId, currentOdometer) => {
   const result = await pool.query(
     `
     UPDATE vehicles
-    SET
-      current_odometer = $1,
-      updated_at = now()
-    WHERE id = $2 AND user_id = $3
+    SET current_odometer = $1,
+        updated_at = now()
+    WHERE id = $2
+      AND user_id = $3
     RETURNING *
     `,
     [odometer, vehicleId, userId]
   );
 
+  if (result.rows.length === 0) {
+    const error = new Error("Vehicle not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  console.log("BEFORE SEND NOTIFICATION");
+
+  await notificationService.sendReminderNotificationsForVehicle(
+    userId,
+    vehicleId
+  );
+
+  console.log("AFTER SEND NOTIFICATION");
+
   return result.rows[0];
 };
+
 
 module.exports = {
   getVehicles,
