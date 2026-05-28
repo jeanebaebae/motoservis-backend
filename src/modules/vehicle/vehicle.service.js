@@ -1,5 +1,4 @@
 const pool = require("../../config/db");
-const notificationService = require("../notification/notification.service");
 
 const getVehicles = async (userId) => {
   const result = await pool.query(
@@ -44,11 +43,10 @@ const updateVehicle = async (userId, vehicleId, data) => {
     SET
       name = $1,
       brand = $2,
-      year = $4,
-      plate_number = $5,
-      current_odometer = $6,
+      year = $3,
+      plate_number = $4,
       updated_at = now()
-    WHERE id = $7 AND user_id = $8
+    WHERE id = $5 AND user_id = $6
     RETURNING *
     `,
     [
@@ -56,7 +54,6 @@ const updateVehicle = async (userId, vehicleId, data) => {
       data.brand,
       data.year,
       data.plate_number,
-      data.current_odometer,
       vehicleId,
       userId,
     ]
@@ -186,15 +183,6 @@ const updateOdometer = async (userId, vehicleId, currentOdometer) => {
     error.statusCode = 404;
     throw error;
   }
-
-  console.log("BEFORE SEND NOTIFICATION");
-
-  await notificationService.sendReminderNotificationsForVehicle(
-    userId,
-    vehicleId
-  );
-
-  console.log("AFTER SEND NOTIFICATION");
 
   return result.rows[0];
 };

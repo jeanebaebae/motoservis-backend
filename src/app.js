@@ -6,7 +6,6 @@ const vehicleRoutes = require("./modules/vehicle/vehicle.routes");
 const reminderRoutes = require("./modules/reminder/reminder.routes");
 const serviceHistoryRoutes = require("./modules/service_history/serviceHistory.routes");
 const dashboardRoutes = require("./modules/dashboard/dashboard.routes");
-const notificationRoutes = require("./modules/notification/notification.routes");
 
 const app = express();
 
@@ -55,6 +54,5 @@ app.use("/api/vehicles", vehicleRoutes);
 app.use("/api", reminderRoutes);
 app.use("/api", serviceHistoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api", notificationRoutes);
 
 module.exports = app;
